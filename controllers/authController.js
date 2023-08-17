@@ -45,6 +45,7 @@ exports.RegisterHandler = asyncHandler(async (req, res, next) => {
     res.status(403).send({ message: "All Fields Are Required." });
   await User.findOne({ email }).then(async (user) => {
     if (user)
+      
       res
         .status(409)
         .send({ message: "User with this email already exists." });
