@@ -53,6 +53,7 @@ exports.RegisterHandler = asyncHandler(async (req, res, next) => {
       await User.create({
         username,
         email,
+        
         password: await bcrypt.hash(password, 10),
         secret: "*".repeat(password.length),
       }).then((user) => {
