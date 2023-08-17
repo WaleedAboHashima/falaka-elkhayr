@@ -45,6 +45,7 @@ exports.RegisterHandler = asyncHandler(async (req, res, next) => {
     res.status(403).send({ message: "All Fields Are Required." });
   await User.findOne({ email }).then(async (user) => {
     if (user)
+      
       res
         .status(409)
         .send({ message: "User with this email already exists." });
@@ -53,8 +54,6 @@ exports.RegisterHandler = asyncHandler(async (req, res, next) => {
         username,
         email,
         password: await bcrypt.hash(password, 10),
-        government,
-        location,
         secret: "*".repeat(password.length),
       }).then((user) => {
         delete user._doc.password && delete user._doc.__v;
