@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Store = require("../models/Stores");
 const User = require("../models/User");
-const Governments = require("../models/Governments");
+const Categories = require("../models/Categories");
 const Rules = require("../models/Rules");
 const Order = require("../models/Orders");
 const bcrypt = require("bcrypt");
@@ -12,13 +12,13 @@ const Reports = require("../models/Report");
 
 // Profile
 
-exports.GetStates = asyncHandler(async (req, res, next) => {
-  const { gove } = req.query;
-  const data = await Governments.findOne({ name: gove });
-  if (data) {
-    res.status(200).json(data);
-  } else {
-    res.status(200).json({ states: [] });
+exports.GetCategories = asyncHandler(async (req, res, next) => {
+  try {
+    await Categories.find({}).then((categories) => {
+      res.status(200).json({ categories });
+    });
+  } catch (e) {
+    res.status(500).json({message: "Server Error" + e});
   }
 });
 
@@ -311,12 +311,13 @@ exports.ChangeQuantity = asyncHandler(async (req, res, next) => {
           } else {
             const newQuantity = product.quantity - 1;
             if (newQuantity === 0) {
-              const product = cart.products.filter(p => p._id.toString() === productId)
+              const product = cart.products.filter(
+                (p) => p._id.toString() === productId
+              );
               cart.products.pop(product[0]);
               cart.save();
               res.sendStatus(200);
-            }
-            else {
+            } else {
               await Cart.updateOne(
                 {
                   _id: cart._id,
@@ -349,13 +350,11 @@ exports.DeleteOrder = asyncHandler(async (req, res, next) => {
     const order = await Order.findOne({ _id: orderId, user: userId });
     if (order) {
       await order.deleteOne();
-      res.sendStatus(200)
+      res.sendStatus(200);
+    } else {
+      res.status(404).json({ message: "Order not found." });
     }
-    else {
-      res.status(404).json({ message: "Order not found." })
-    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-  catch (err) {
-    res.status(500).json({message: err.message})
-  }
-})
+});

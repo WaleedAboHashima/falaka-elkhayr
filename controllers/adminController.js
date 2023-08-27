@@ -10,6 +10,7 @@ const ProductSchema = require("../models/Products");
 const Store = require("../models/Stores");
 const Product = require("../models/Products");
 const User = require("../models/User");
+const Categories = require("../models/Categories");
 const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
@@ -17,6 +18,7 @@ cloudinary.config({
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
+
 
 exports.AdminRegister = asnycHandler(async (req, res, next) => {
   const { email, phone, password, storeName, government, location } = req.body;

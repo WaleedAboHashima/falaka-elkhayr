@@ -8,7 +8,33 @@ const jwt = require("jsonwebtoken");
 const Rules = require("../models/Rules");
 const Users = require("../models/User");
 const Stores = require("../models/Stores");
+const ApiError = require("../utils/ApiError");
+const Categories = require("../models/Categories");
 const { default: mongoose } = require("mongoose");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
+
+exports.AddCategory = asyncHandler(async (req, res, next) => {
+  const { name } = req.body;
+  const { logo } = req.files;
+  if (!name || !logo) return next(new ApiError("All fields are required", 403));
+  else {
+    const uploadlogo = (await cloudinary.uploader.upload(logo[0].path)).secure_url;
+    await Categories.create({ name, icon: uploadlogo }).then((category) => {
+      if (category) {
+        res.status(200).json(category);
+      } else {
+        res.status(403).json({ message: "Invalid data" });
+      }
+    });
+  }
+});
+
 exports.FounderLogin = asyncHandler(async (req, res) => {
   const { email, password, phone } = req.body;
   if (!email || !password || !phone) {
@@ -136,7 +162,7 @@ exports.DeletStore = asyncHandler(async (req, res, next) => {
 exports.GetReports = asyncHandler(async (req, res, next) => {
   await Reports.find({}).then((reports) => {
     if (reports) {
-      res.status(200).json({reports});
+      res.status(200).json({ reports });
     } else {
       res.status(404).json({ message: "No Reports Avaliable." });
     }
@@ -149,16 +175,14 @@ exports.DeleteReport = asyncHandler(async (req, res, next) => {
     await Reports.findByIdAndDelete(repId).then((report) => {
       if (report) {
         res.sendStatus(200);
+      } else {
+        res.status(404).json({ message: "Feedback not found." });
       }
-      else {
-        res.status(404).json({message: 'Feedback not found.'})
-      }
-    })
-  }
-  catch (err) {
+    });
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
-})
+});
 
 exports.ArchiveOrder = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
@@ -169,7 +193,7 @@ exports.ArchiveOrder = asyncHandler(async (req, res, next) => {
     if (valid) {
       const order = await Orders.findById({ _id: orderId });
       if (order) {
-        await Orders.findByIdAndUpdate( orderId, { archived: !order.archived });
+        await Orders.findByIdAndUpdate(orderId, { archived: !order.archived });
         res.sendStatus(200);
       } else {
         res.status(404).json({ message: "Order not found." });
@@ -182,38 +206,38 @@ exports.ArchiveOrder = asyncHandler(async (req, res, next) => {
 
 exports.top3 = asyncHandler(async (req, res, next) => {
   await Orders.aggregate([
-      { $match: { archived: false } }, // Match only non-archived orders
-      {
-          $group: {
-              _id: '$user',
-              orderCount: { $sum: 1 },
-              user: { $first: '$$ROOT.user' } // Include the user field in the result
-          }
+    { $match: { archived: false } }, // Match only non-archived orders
+    {
+      $group: {
+        _id: "$user",
+        orderCount: { $sum: 1 },
+        user: { $first: "$$ROOT.user" }, // Include the user field in the result
       },
-      {
-          $lookup: {
-              from: 'users', // Assuming the user collection is named 'users'
-              localField: 'user',
-              foreignField: '_id',
-              as: 'user'
-          }
+    },
+    {
+      $lookup: {
+        from: "users", // Assuming the user collection is named 'users'
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
       },
-      {
-          $unwind: '$user'
+    },
+    {
+      $unwind: "$user",
+    },
+    {
+      $project: {
+        _id: 0,
+        user: {
+          _id: 1,
+          username: 1,
+          email: 1,
+          // Exclude the password field
+        },
+        orderCount: 1,
       },
-      {
-          $project: {
-              _id: 0,
-              user: {
-                  _id: 1,
-                  username: 1,
-                  email: 1,
-                  // Exclude the password field
-              },
-              orderCount: 1
-          }
-      },
-      { $sort: { orderCount: -1 } }, // Sort in descending order of order count
-      { $limit: 3 } // Limit the result to 3 documents
-  ]).then((orders) => res.json({ orders }))
-})
+    },
+    { $sort: { orderCount: -1 } }, // Sort in descending order of order count
+    { $limit: 3 }, // Limit the result to 3 documents
+  ]).then((orders) => res.json({ orders }));
+});

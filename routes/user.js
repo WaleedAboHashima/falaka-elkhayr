@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const {
   GetStores,
-  GetStates,
+  GetCategories,
   GetNearStores,
   GetOrderHistory,
   AddOrder,
@@ -16,7 +16,7 @@ const {
 } = require("../controllers/userController");
 
 //General
-router.get("/states", GetStates);
+router.get("/categories", GetCategories);
 
 //Stores
 router.get("/nearstores", GetNearStores);

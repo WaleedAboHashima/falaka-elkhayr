@@ -30,9 +30,7 @@ app.use("*", (req, res) => res.status(404).send("Page Not Found"));
 DB()
   .then((connect) => {
     server.listen(port, () => {
-      console.log(
-        `Server running on port ${port} & Database ${connect.connection.host}`
-      );
+      console.log(`Server running on port ${port} & Database ${connect.connection.host}`);
     });
   })
   .catch((err) => {

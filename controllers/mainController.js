@@ -3,6 +3,8 @@ const asyncHandler = require("express-async-handler");
 const Rules = require("../models/Rules");
 const User = require("../models/User");
 const Reports = require("../models/Report");
+
+
 exports.GetAllOrders = asyncHandler(async (req, res, next) => {
   try {
     const allorders = await Orders.find({}).populate({
